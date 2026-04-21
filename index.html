@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UNO 🎴</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --text: #f0f0f0;
+    --muted: #666;
+    --red: #e63946;
+    --green: #2dc653;
+    --blue: #4895ef;
+    --yellow: #f4c430;
+    --wild: #9b5de5;
+    --accent: #ff6b35;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle at 20% 20%, rgba(230,57,70,0.06) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(72,149,239,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .screen { width: 100%; max-width: 900px; padding: 20px; position: relative; z-index: 1; }
+
+  /* LOBBY */
+  #lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(80px, 15vw, 140px);
+    line-height: 0.9;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--red) 0%, var(--yellow) 50%, var(--green) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 40px rgba(230,57,70,0.3));
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .lobby-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .lobby-form h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    width: 100%;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 10px;
+  }
+
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* WAITING */
+  #waiting {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .waiting-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+  }
+
+  .room-code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 40px;
+  }
+
+  .room-code-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+
+  .room-code-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 8px;
+    color: var(--accent);
+  }
+
+  .pulse {
+    width: 12px; height: 12px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* GAME */
+  #game {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .player-info { display: flex; align-items: center; gap: 10px; }
+
+  .player-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .player-name { font-size: 14px; font-weight: 600; }
+  .player-cards { font-size: 12px; color: var(--muted); }
+
+  .turn-indicator {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .turn-indicator.my-turn {
+    background: rgba(255,107,53,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* TABLE */
+  .table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    min-height: 200px;
+    position: relative;
+  }
+
+  .pile-area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .pile-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+
+  /* CARD */
+  .card {
+    width: 72px; height: 108px;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.15);
+    transition: all 0.2s;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .card .card-corner {
+    position: absolute;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .card .card-corner.tl { top: 6px; left: 8px; }
+  .card .card-corner.br { bottom: 6px; right: 8px; transform: rotate(180deg); }
+
+  .card.red { background: linear-gradient(145deg, #e63946, #c1121f); color: white; }
+  .card.green { background: linear-gradient(145deg, #2dc653, #1a7a31); color: white; }
+  .card.blue { background: linear-gradient(145deg, #4895ef, #1d6fb5); color: white; }
+  .card.yellow { background: linear-gradient(145deg, #f4c430, #d4a017); color: #1a1a1a; }
+  .card.wild { background: linear-gradient(145deg, #9b5de5, #6a0dad); color: white; }
+
+  .card.playable:hover {
+    transform: translateY(-8px) scale(1.05);
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+
+  .card.not-playable { opacity: 0.4; cursor: not-allowed; }
+
+  .card-back {
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 2px solid var(--border);
+  }
+
+  .card-back::after {
+    content: 'UNO';
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  /* DRAW PILE */
+  .draw-pile {
+    width: 72px; height: 108px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 2px solid var(--border);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 4px;
+  }
+
+  .draw-pile:hover { transform: scale(1.05); border-color: var(--accent); }
+
+  .draw-pile-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .draw-pile-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: var(--accent);
+  }
+
+  /* CURRENT COLOR INDICATOR */
+  .color-indicator {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted);
+  }
+
+  .color-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  /* HAND */
+  .hand-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .hand-label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  .hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  /* ACTION BUTTONS */
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-uno {
+    background: var(--red);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-uno:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+  .btn-catch {
+    background: transparent;
+    border: 1px solid var(--yellow);
+    color: var(--yellow);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-catch:hover { background: rgba(244,196,48,0.1); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* COLOR PICKER MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+  }
+
+  .modal h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+
+  .color-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .color-btn {
+    padding: 16px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .color-btn:hover { transform: scale(1.05); }
+  .color-btn.red { background: var(--red); color: white; }
+  .color-btn.green { background: var(--green); color: white; }
+  .color-btn.blue { background: var(--blue); color: white; }
+  .color-btn.yellow { background: var(--yellow); color: #1a1a1a; }
+
+  /* GAME OVER */
+  #gameover {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .gameover-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 10vw, 80px);
+    letter-spacing: 4px;
+  }
+
+  .gameover-subtitle { color: var(--muted); font-size: 16px; }
+
+  .gameover-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 48px;
+  }
+
+  /* OPPONENT HAND DISPLAY */
+  .opponent-hand {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .opp-card {
+    width: 28px; height: 42px;
+    border-radius: 4px;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 1px solid var(--border);
+  }
+
+  /* Special card symbols */
+  .card-symbol { font-size: 20px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .card { width: 58px; height: 88px; font-size: 22px; }
+    .table { padding: 20px; gap: 24px; }
+    .draw-pile { width: 58px; height: 88px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- COLOR PICKER MODAL -->
+<div class="modal-overlay" id="colorModal">
+  <div class="modal">
+    <h3>Choose Color</h3>
+    <div class="color-options">
+      <button class="color-btn red" onclick="chooseColor('red')">Red</button>
+      <button class="color-btn green" onclick="chooseColor('green')">Green</button>
+      <button class="color-btn blue" onclick="chooseColor('blue')">Blue</button>
+      <button class="color-btn yellow" onclick="chooseColor('yellow')">Yellow</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="lobby">
+  <div class="logo">UNO</div>
+  <div class="subtitle">Play with your person 🎴</div>
+
+  <div class="lobby-form">
+    <h2>Join or Create</h2>
+    <input type="text" id="nameInput" placeholder="Your name" maxlength="16"/>
+    <input type="text" id="roomInput" placeholder="Room code (e.g. LOVE)" maxlength="8" style="text-transform:uppercase"/>
+    <button class="btn" onclick="joinRoom()">Enter Room</button>
+    <div class="divider">or</div>
+    <button class="btn btn-ghost" onclick="randomRoom()">Generate Random Room Code</button>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="waiting" style="display:none; flex-direction:column; align-items:center; gap:24px; text-align:center;">
+  <div class="waiting-title">Waiting...</div>
+  <div class="room-code">
+    <div class="room-code-label">Share this code with her</div>
+    <div class="room-code-value" id="displayRoomCode">----</div>
+  </div>
+  <div><span class="pulse"></span> Waiting for opponent to join</div>
+  <div style="color:var(--muted); font-size:13px;">Both of you need to enter the same room code</div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game" style="display:none; flex-direction:column; gap:16px;">
+
+  <!-- Header -->
+  <div class="game-header">
+    <div class="player-info">
+      <div class="player-avatar" id="oppAvatar" style="background:rgba(72,149,239,0.2); color:var(--blue);">?</div>
+      <div>
+        <div class="player-name" id="oppName">Opponent</div>
+        <div class="player-cards"><span id="oppCount">7</span> cards</div>
+      </div>
+    </div>
+    <div class="turn-indicator" id="turnIndicator">THEIR TURN</div>
+    <div class="player-info">
+      <div>
+        <div class="player-name" style="text-align:right;" id="myNameDisplay">You</div>
+        <div class="player-cards" style="text-align:right;"><span id="myCount">7</span> cards</div>
+      </div>
+      <div class="player-avatar" id="myAvatar" style="background:rgba(255,107,53,0.2); color:var(--accent);">Y</div>
+    </div>
+  </div>
+
+  <!-- Opponent cards (back-facing) -->
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;">
+    <div class="hand-label">Their hand</div>
+    <div class="opponent-hand" id="oppHand"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table">
+    <div class="pile-area">
+      <div class="pile-label">Draw Pile</div>
+      <div class="draw-pile" onclick="drawCard()" id="drawPile">
+        <div class="draw-pile-text">DRAW</div>
+        <div class="draw-pile-count" id="drawCount">--</div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div class="pile-label">Top Card</div>
+      <div class="card" id="topCard">
+        <span class="card-corner tl" id="topCardCornerTL"></span>
+        <span class="card-symbol" id="topCardSymbol"></span>
+        <span class="card-corner br" id="topCardCornerBR"></span>
+      </div>
+      <div class="color-indicator">
+        <div class="color-dot" id="colorDot"></div>
+        <span id="colorLabel">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- My hand -->
+  <div class="hand-area">
+    <div class="hand-label">Your hand</div>
+    <div class="hand" id="myHand"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn-uno" onclick="callUno()" id="unoBtn" style="display:none;">UNO!</button>
+    <button class="btn-catch" onclick="catchUno()" id="catchBtn">🕵️ Catch UNO</button>
+  </div>
+
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="gameover" style="display:none; flex-direction:column; align-items:center; gap:24px; text-align:center;">
+  <div class="gameover-title" id="gameoverTitle">GG!</div>
+  <div class="gameover-box">
+    <div class="gameover-subtitle" id="gameoverSub"></div>
+  </div>
+  <button class="btn" style="max-width:300px;" onclick="rematch()">Rematch 🔄</button>
+</div>
+
+<script>
+let ws;
+let myIndex = null;
+let myName = '';
+let roomId = '';
+let pendingWildCard = null;
+let gameState = null;
+
+function getCardSymbol(value) {
+  const symbols = {
+    'skip': '⊘',
+    'reverse': '↺',
+    'draw2': '+2',
+    'wild': '🌈',
+    'wild4': '+4',
+  };
+  return symbols[value] || value.toUpperCase();
+}
+
+function getColorStyle(color) {
+  const map = { red: '#e63946', green: '#2dc653', blue: '#4895ef', yellow: '#f4c430', wild: '#9b5de5' };
+  return map[color] || '#666';
+}
+
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function showScreen(id) {
+  ['lobby', 'waiting', 'game', 'gameover'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  target.style.display = 'flex';
+  target.style.flexDirection = 'column';
+  target.style.alignItems = id === 'game' ? 'stretch' : 'center';
+}
+
+function randomRoom() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let code = '';
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('roomInput').value = code;
+}
+
+function joinRoom() {
+  myName = document.getElementById('nameInput').value.trim();
+  roomId = document.getElementById('roomInput').value.trim().toUpperCase();
+
+  if (!myName) { showToast('Enter your name first!'); return; }
+  if (!roomId) { showToast('Enter a room code!'); return; }
+
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const host = location.host;
+  ws = new WebSocket(`${protocol}://${host}`);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', roomId, name: myName }));
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    handleMessage(msg);
+  };
+
+  ws.onclose = () => {
+    showToast('Connection lost. Refresh to reconnect.', 5000);
+  };
+
+  ws.onerror = () => {
+    showToast('Could not connect to server. Is the server running?', 4000);
+  };
+}
+
+function handleMessage(msg) {
+  switch(msg.type) {
+    case 'joined':
+      myIndex = msg.index;
+      document.getElementById('displayRoomCode').textContent = msg.roomId;
+      showScreen('waiting');
+      break;
+
+    case 'waiting':
+      showScreen('waiting');
+      break;
+
+    case 'gameStart':
+      showScreen('game');
+      showToast('Game started! 🎴');
+      break;
+
+    case 'gameState':
+      gameState = msg;
+      renderGame(msg);
+      break;
+
+    case 'gameOver':
+      const isWinner = msg.winner === myIndex;
+      document.getElementById('gameoverTitle').textContent = isWinner ? '🎉 You Win!' : '😔 You Lost';
+      document.getElementById('gameoverSub').textContent = isWinner
+        ? `${msg.winnerName} wins this round!`
+        : `${msg.winnerName} beat you this time.`;
+      showScreen('gameover');
+      break;
+
+    case 'unoCalled':
+      showToast(`${msg.playerName} called UNO! 🔴`);
+      break;
+
+    case 'unoCaught':
+      showToast(`${msg.caughtName} got caught! +2 cards 😂`);
+      break;
+
+    case 'rematchWaiting':
+      showToast(`${msg.playerName} wants a rematch...`);
+      break;
+
+    case 'playerLeft':
+      showToast('Opponent disconnected 😢', 5000);
+      break;
+
+    case 'error':
+      showToast(msg.message);
+      break;
+  }
+}
+
+function renderGame(state) {
+  const isMyTurn = state.currentTurn === myIndex;
+  const oppIndex = 1 - myIndex;
+  const oppName = state.players[oppIndex]?.name || 'Opponent';
+  const myNameStr = state.players[myIndex]?.name || 'You';
+
+  // Header
+  document.getElementById('oppName').textContent = oppName;
+  document.getElementById('oppAvatar').textContent = oppName[0].toUpperCase();
+  document.getElementById('myNameDisplay').textContent = myNameStr;
+  document.getElementById('myAvatar').textContent = myNameStr[0].toUpperCase();
+  document.getElementById('oppCount').textContent = state.opponentCount;
+  document.getElementById('myCount').textContent = state.myHand.length;
+
+  const turnEl = document.getElementById('turnIndicator');
+  if (isMyTurn) {
+    turnEl.textContent = 'YOUR TURN';
+    turnEl.className = 'turn-indicator my-turn';
+  } else {
+    turnEl.textContent = 'THEIR TURN';
+    turnEl.className = 'turn-indicator';
+  }
+
+  // Opponent hand (card backs)
+  const oppHand = document.getElementById('oppHand');
+  oppHand.innerHTML = '';
+  for (let i = 0; i < state.opponentCount; i++) {
+    const c = document.createElement('div');
+    c.className = 'opp-card';
+    oppHand.appendChild(c);
+  }
+
+  // Top card
+  const top = state.topCard;
+  const topEl = document.getElementById('topCard');
+  topEl.className = `card ${top.color}`;
+  document.getElementById('topCardSymbol').textContent = getCardSymbol(top.value);
+  document.getElementById('topCardCornerTL').textContent = getCardSymbol(top.value);
+  document.getElementById('topCardCornerBR').textContent = getCardSymbol(top.value);
+
+  // Color indicator
+  const activeColor = state.currentColor;
+  document.getElementById('colorDot').style.background = getColorStyle(activeColor);
+  document.getElementById('colorLabel').textContent = activeColor.toUpperCase();
+
+  // Draw pile
+  document.getElementById('drawCount').textContent = state.drawPileCount;
+
+  // My hand
+  const myHand = document.getElementById('myHand');
+  myHand.innerHTML = '';
+  state.myHand.forEach((card, idx) => {
+    const playable = isMyTurn && canPlay(card, top, activeColor);
+    const el = document.createElement('div');
+    el.className = `card ${card.color} ${playable ? 'playable' : 'not-playable'}`;
+    el.innerHTML = `
+      <span class="card-corner tl">${getCardSymbol(card.value)}</span>
+      <span class="card-symbol">${getCardSymbol(card.value)}</span>
+      <span class="card-corner br">${getCardSymbol(card.value)}</span>
+    `;
+    if (playable) el.onclick = () => playCard(idx, card);
+    myHand.appendChild(el);
+  });
+
+  // UNO button
+  const unoBtn = document.getElementById('unoBtn');
+  if (state.myHand.length === 1 && !state.unoCalled) {
+    unoBtn.style.display = 'inline-block';
+  } else {
+    unoBtn.style.display = 'none';
+  }
+}
+
+function canPlay(card, topCard, currentColor) {
+  if (card.color === 'wild') return true;
+  if (card.color === currentColor) return true;
+  if (card.value === topCard.value) return true;
+  return false;
+}
+
+function playCard(idx, card) {
+  if (card.color === 'wild') {
+    pendingWildCard = idx;
+    document.getElementById('colorModal').classList.add('open');
+    return;
+  }
+  ws.send(JSON.stringify({ type: 'playCard', cardIndex: idx }));
+}
+
+function chooseColor(color) {
+  document.getElementById('colorModal').classList.remove('open');
+  ws.send(JSON.stringify({ type: 'playCard', cardIndex: pendingWildCard, chosenColor: color }));
+  pendingWildCard = null;
+}
+
+function drawCard() {
+  ws.send(JSON.stringify({ type: 'drawCard' }));
+}
+
+function callUno() {
+  ws.send(JSON.stringify({ type: 'callUno' }));
+  showToast('UNO! 🔴');
+}
+
+function catchUno() {
+  ws.send(JSON.stringify({ type: 'catchUno' }));
+}
+
+function rematch() {
+  ws.send(JSON.stringify({ type: 'rematch' }));
+  showToast('Rematch request sent...');
+}
+
+// Allow Enter key in inputs
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+document.getElementById('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+document.getElementById('roomInput').addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase();
+});
+</script>
+</body>
+</html>
